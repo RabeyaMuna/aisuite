@@ -1,11 +1,11 @@
-from .provider import ProviderFactory
-import os
-from .utils.tools import Tools
-from typing import Union, BinaryIO, Optional, Any, Literal
+from typing import Any, BinaryIO, Literal, Optional, Union
+
+from .framework.asr_params import ParamValidator
 from .framework.message import (
     TranscriptionResponse,
 )
-from .framework.asr_params import ParamValidator
+from .provider import ProviderFactory
+from .utils.tools import Tools
 
 
 class Client:
@@ -349,10 +349,7 @@ class Transcriptions:
         # Validate provider is supported
         supported_providers = ProviderFactory.get_supported_providers()
         if provider_key not in supported_providers:
-            raise ValueError(
-                f"Invalid provider key '{provider_key}'. "
-                f"Supported providers: {supported_providers}"
-            )
+            raise ValueError(f"Provider '{provider_key}' is not available")
 
         # Validate and map parameters
         validated_params = self.client.param_validator.validate_and_map(

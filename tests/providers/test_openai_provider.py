@@ -5,15 +5,14 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from aisuite.providers.openai_provider import OpenaiProvider
-from aisuite.provider import ASRError
 from aisuite.framework.message import (
-    TranscriptionResult,
-    TranscriptionOptions,
-    StreamingTranscriptionChunk,
     Segment,
-    Word,
+    StreamingTranscriptionChunk,
+    TranscriptionOptions,
+    TranscriptionResult,
 )
+from aisuite.provider import ASRError
+from aisuite.providers.openai_provider import OpenaiProvider
 
 
 @pytest.fixture(autouse=True)
@@ -137,7 +136,8 @@ class TestOpenAIASR:
 
             mock_create.assert_called_once()
             call_kwargs = mock_create.call_args.kwargs
-            assert "language" in call_kwargs
+            assert "options" in call_kwargs
+            assert call_kwargs["options"] is options
             assert isinstance(result, TranscriptionResult)
             assert result.text == "Hello, this is a test transcription."
 
