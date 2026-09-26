@@ -3,7 +3,9 @@ import os
 from typing import Union, BinaryIO, AsyncGenerator
 from aisuite.provider import Provider, LLMError, ASRError, Audio
 from aisuite.providers.message_converter import OpenAICompliantMessageConverter
+from aisuite.framework.parameter_mapper import ParameterMapper
 from aisuite.framework.message import (
+    TranscriptionOptions,
     TranscriptionResult,
     Segment,
     Word,
@@ -78,6 +80,14 @@ class OpenAIAudio(Audio):
             This is a simple pass-through to the OpenAI API.
             """
             try:
+                # Handle TranscriptionOptions if present
+                options = kwargs.pop("options", None)
+                if options is not None:
+                    mapped = ParameterMapper.map_to_openai(options)
+                    # Merge mapped params into kwargs (mapped params take precedence)
+                    for k, v in mapped.items():
+                        kwargs[k] = v
+
                 # Handle timestamp_granularities requirement
                 if "timestamp_granularities" in kwargs:
                     # OpenAI requires verbose_json format for timestamp_granularities

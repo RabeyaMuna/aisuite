@@ -7,7 +7,9 @@ import time
 from typing import Union, BinaryIO, AsyncGenerator
 
 from aisuite.provider import Provider, ASRError, Audio
+from aisuite.framework.parameter_mapper import ParameterMapper
 from aisuite.framework.message import (
+    TranscriptionOptions,
     TranscriptionResult,
     Segment,
     Word,
@@ -82,6 +84,14 @@ class DeepgramAudio(Audio):
             """
             try:
                 from deepgram import PrerecordedOptions
+
+                # Handle TranscriptionOptions if present
+                options = kwargs.pop("options", None)
+                if options is not None:
+                    mapped = ParameterMapper.map_to_deepgram(options)
+                    # Merge mapped params into kwargs (mapped params take precedence)
+                    for k, v in mapped.items():
+                        kwargs[k] = v
 
                 # Add model to params and set defaults
                 kwargs["model"] = model
