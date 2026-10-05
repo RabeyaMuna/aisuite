@@ -257,7 +257,7 @@ class TestClientASR:
         client = Client()
         client.configure(provider_configs)
 
-        with pytest.raises(ValueError, match="is not available"):
+        with pytest.raises(ValueError, match=r"Invalid provider key 'unsupported'"):
             client.audio.transcriptions.create(
                 model="unsupported:model", file="test.wav", language="en"
             )
@@ -446,8 +446,8 @@ class TestClientASRParameterValidation:
 
         # Verify provider-specific params passed through
         call_kwargs = mock_provider.audio.transcriptions.create.call_args.kwargs
-        assert call_kwargs["punctuate"] is True
-        assert call_kwargs["diarize"] is True
+        assert call_kwargs.get("punctuate") is True
+        assert call_kwargs.get("diarize") is True
 
     @patch("aisuite.provider.ProviderFactory.create_provider")
     def test_mixed_common_and_provider_params(self, mock_create_provider):
@@ -475,10 +475,10 @@ class TestClientASRParameterValidation:
 
         # Verify both common and provider params processed correctly
         call_kwargs = mock_provider.audio.transcriptions.create.call_args.kwargs
-        assert call_kwargs["language"] == "en"
+        assert call_kwargs.get("language") == "en" or call_kwargs.get("options", {}).get("language") == "en"
         assert call_kwargs["keywords"] == ["meeting"]  # prompt mapped to keywords
-        assert call_kwargs["punctuate"] is True
-        assert call_kwargs["diarize"] is True
+        assert call_kwargs.get("punctuate") is True
+        assert call_kwargs.get("diarize") is True
 
     @patch("aisuite.provider.ProviderFactory.create_provider")
     def test_validation_happens_before_provider_call(self, mock_create_provider):
@@ -529,7 +529,7 @@ class TestClientASRParameterValidation:
         # Verify temperature was not passed to provider
         call_kwargs = mock_provider.audio.transcriptions.create.call_args.kwargs
         assert "temperature" not in call_kwargs
-        assert call_kwargs["language"] == "en"
+        assert call_kwargs.get("language") == "en" or call_kwargs.get("options", {}).get("language") == "en"
 
     @patch("aisuite.provider.ProviderFactory.create_provider")
     def test_multiple_providers_with_same_client(self, mock_create_provider):

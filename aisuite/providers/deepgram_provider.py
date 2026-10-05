@@ -89,6 +89,16 @@ class DeepgramAudio(Audio):
                 kwargs.setdefault("punctuate", True)
                 kwargs.setdefault("language", "en")
 
+                # Deepgram SDK does not accept an "options" wrapper; unwrap it if present.
+                options = kwargs.pop("options", None)
+                if options is not None:
+                    if hasattr(options, "model_dump"):
+                        kwargs.update(options.model_dump(exclude_none=True))
+                    elif hasattr(options, "dict"):
+                        kwargs.update(options.dict(exclude_none=True))
+                    elif isinstance(options, dict):
+                        kwargs.update(options)
+
                 deepgram_options = PrerecordedOptions(**kwargs)
                 payload = self._prepare_audio_payload(file)
 
