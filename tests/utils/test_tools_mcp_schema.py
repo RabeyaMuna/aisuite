@@ -69,7 +69,9 @@ class TestToolsMCPSchema(unittest.TestCase):
         }
 
         tool = MockMCPToolWrapper(
-            "create_entities", "Create multiple entities", input_schema
+            "create_entities",
+            "Create multiple entities",
+            input_schema,
         )
         self.tool_manager._add_tool(tool)
 

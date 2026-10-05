@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Any, Type, Optional, get_origin, get_args, Union
+from typing import Any, Callable, Dict, Optional, Type, Union, get_args, get_origin
 from pydantic import BaseModel, create_model, Field, ValidationError
 import inspect
 import json
@@ -149,7 +149,7 @@ class Tools:
         return {
             "name": func.__name__,
             "description": func.__doc__ or "",
-            "parameters": input_schema  # Use original schema directly!
+            "parameters": input_schema,  # Use original schema directly!
         }
 
     def _create_pydantic_model_from_mcp_schema(
