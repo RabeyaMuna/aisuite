@@ -10,7 +10,6 @@ from aisuite.provider import ASRError
 from aisuite.framework.message import (
     TranscriptionResult,
     TranscriptionOptions,
-    StreamingTranscriptionChunk,
 )
 
 
@@ -89,11 +88,12 @@ class TestDeepgramProvider:
         with patch("builtins.open", mock_open(read_data=b"fake audio data")), patch(
             "deepgram.clients.listen.v1.rest.client.ListenRESTClient.transcribe_file",
             return_value=mock_sdk_response,
-        ):
+        ) as mock_transcribe:
             result = deepgram_provider.audio.transcriptions.create(
                 model="deepgram:nova-2", file="test_audio.mp3"
             )
 
+            mock_transcribe.assert_called_once()
             assert isinstance(result, TranscriptionResult)
             assert result.text == "Hello, this is a test transcription from Deepgram."
             assert result.language == "en-US"
@@ -108,11 +108,12 @@ class TestDeepgramProvider:
         with patch(
             "deepgram.clients.listen.v1.rest.client.ListenRESTClient.transcribe_file",
             return_value=MagicMock(to_dict=lambda: mock_deepgram_response),
-        ):
+        ) as mock_transcribe:
             result = deepgram_provider.audio.transcriptions.create(
                 model="deepgram:nova-2", file=audio_data
             )
 
+            mock_transcribe.assert_called_once()
             assert isinstance(result, TranscriptionResult)
             assert result.text == "Hello, this is a test transcription from Deepgram."
 
@@ -167,11 +168,7 @@ class TestDeepgramProvider:
             deepgram_provider.client.listen.websocket,
             "v",
             return_value=mock_connection,
-        ), patch(
-            "queue.Queue"
-        ), patch(
-            "threading.Event"
-        ):
+        ), patch("queue.Queue"), patch("threading.Event"):
             result = deepgram_provider.audio.transcriptions.create_stream_output(
                 model="deepgram:nova-2",
                 file="test_audio.mp3",

@@ -12,7 +12,6 @@ from aisuite.framework.message import (
     TranscriptionOptions,
     StreamingTranscriptionChunk,
     Segment,
-    Word,
 )
 
 
@@ -137,7 +136,9 @@ class TestOpenAIASR:
 
             mock_create.assert_called_once()
             call_kwargs = mock_create.call_args.kwargs
-            assert "language" in call_kwargs
+            # The provider passes the options dict, not individual parameters
+            assert "options" in call_kwargs
+            assert call_kwargs["options"]["language"] == "en"
             assert isinstance(result, TranscriptionResult)
             assert result.text == "Hello, this is a test transcription."
 

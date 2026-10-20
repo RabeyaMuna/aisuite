@@ -1,5 +1,4 @@
 from .provider import ProviderFactory
-import os
 from .utils.tools import Tools
 from typing import Union, BinaryIO, Optional, Any, Literal
 from .framework.message import (
@@ -59,7 +58,7 @@ class Client:
 
         if provider_key not in supported_providers:
             raise ValueError(
-                f"Invalid provider key '{provider_key}'. Supported providers: {supported_providers}. "
+                f"Provider '{provider_key}' is not available. Supported providers: {supported_providers}. "
                 "Make sure the model string is formatted correctly as 'provider:model'."
             )
 
@@ -350,7 +349,7 @@ class Transcriptions:
         supported_providers = ProviderFactory.get_supported_providers()
         if provider_key not in supported_providers:
             raise ValueError(
-                f"Invalid provider key '{provider_key}'. "
+                f"Provider '{provider_key}' is not available. "
                 f"Supported providers: {supported_providers}"
             )
 

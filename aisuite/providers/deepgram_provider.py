@@ -89,6 +89,9 @@ class DeepgramAudio(Audio):
                 kwargs.setdefault("punctuate", True)
                 kwargs.setdefault("language", "en")
 
+                # Remove 'options' key if present, as it's not a valid parameter for PrerecordedOptions
+                kwargs.pop("options", None)
+
                 deepgram_options = PrerecordedOptions(**kwargs)
                 payload = self._prepare_audio_payload(file)
 
@@ -151,6 +154,8 @@ class DeepgramAudio(Audio):
 
                 # Remove parameters not supported by LiveOptions (streaming)
                 kwargs.pop("utterances", None)
+                # Remove 'options' key if present, as it's not a valid parameter for LiveOptions
+                kwargs.pop("options", None)
 
                 # Add critical audio format parameters
                 kwargs["encoding"] = "linear16"  # PCM16 format
