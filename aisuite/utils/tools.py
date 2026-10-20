@@ -149,7 +149,7 @@ class Tools:
         return {
             "name": func.__name__,
             "description": func.__doc__ or "",
-            "parameters": input_schema  # Use original schema directly!
+            "parameters": input_schema,  # Use original schema directly!
         }
 
     def _create_pydantic_model_from_mcp_schema(
@@ -246,7 +246,7 @@ class Tools:
             for tool in self._tools.values()
         ]
 
-    def results_to_messages(self, results: list, message: any) -> list:
+    def results_to_messages(self, results: list, message: Any) -> list:
         """Converts results to messages."""
         # if message is empty return empty list
         if not message or len(results) == 0:
