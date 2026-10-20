@@ -27,7 +27,6 @@ from aisuite.framework.message import (
 from aisuite.framework.parameter_mapper import ParameterMapper
 from aisuite.provider import Provider, ASRError, Audio
 
-
 DEFAULT_TEMPERATURE = 0.7
 ENABLE_DEBUG_MESSAGES = False
 
@@ -398,8 +397,7 @@ class GoogleAudio(Audio):
                 )
 
                 responses = self.provider.speech_client.streaming_recognize(
-                    config=streaming_config,
-                    requests=request_generator
+                    config=streaming_config, requests=request_generator
                 )
 
                 for response in responses:
