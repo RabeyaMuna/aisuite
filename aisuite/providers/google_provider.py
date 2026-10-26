@@ -398,8 +398,7 @@ class GoogleAudio(Audio):
                 )
 
                 responses = self.provider.speech_client.streaming_recognize(
-                    config=streaming_config,
-                    requests=request_generator
+                    config=streaming_config, requests=request_generator
                 )
 
                 for response in responses:
