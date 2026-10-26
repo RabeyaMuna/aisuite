@@ -7,6 +7,7 @@ import time
 from typing import Union, BinaryIO, AsyncGenerator
 
 from aisuite.provider import Provider, ASRError, Audio
+from aisuite.framework.parameter_mapper import ParameterMapper
 from aisuite.framework.message import (
     TranscriptionResult,
     Segment,
@@ -68,10 +69,27 @@ class DeepgramAudio(Audio):
         def __init__(self, client):
             self.client = client
 
+        def _resolve_kwargs(self, options, kwargs):
+            """Merge unified TranscriptionOptions into provider-specific kwargs."""
+            if options is not None:
+                kwargs = {**kwargs, **ParameterMapper.map_to_deepgram(options)}
+            kwargs.pop("options", None)
+            return kwargs
+
+        def _build_options_object(self, options_cls, kwargs):
+            """Instantiate Deepgram option objects without relying on keyword args."""
+            options_obj = options_cls()
+            for key, value in kwargs.items():
+                if key == "options":
+                    continue
+                setattr(options_obj, key, value)
+            return options_obj
+
         def create(
             self,
             model: str,
             file: Union[str, BinaryIO],
+            options=None,
             **kwargs,
         ) -> TranscriptionResult:
             """
@@ -83,17 +101,21 @@ class DeepgramAudio(Audio):
             try:
                 from deepgram import PrerecordedOptions
 
+                kwargs = self._resolve_kwargs(options, kwargs)
+
                 # Add model to params and set defaults
                 kwargs["model"] = model
                 kwargs.setdefault("smart_format", True)
                 kwargs.setdefault("punctuate", True)
                 kwargs.setdefault("language", "en")
 
-                deepgram_options = PrerecordedOptions(**kwargs)
+                deepgram_options = self._build_options_object(
+                    PrerecordedOptions, kwargs
+                )
                 payload = self._prepare_audio_payload(file)
 
                 response = self.client.listen.rest.v("1").transcribe_file(
-                    payload, deepgram_options
+                    payload, options=deepgram_options
                 )
 
                 response_dict = (
@@ -110,6 +132,7 @@ class DeepgramAudio(Audio):
             model: str,
             file: Union[str, BinaryIO],
             chunk_size_minutes: float = 3.0,
+            options=None,
             **kwargs,
         ) -> AsyncGenerator[StreamingTranscriptionChunk, None]:
             """
@@ -121,6 +144,8 @@ class DeepgramAudio(Audio):
             try:
                 from deepgram import LiveOptions
                 from deepgram.clients.listen import LiveTranscriptionEvents
+
+                kwargs = self._resolve_kwargs(options, kwargs)
 
                 # Load and prepare audio
                 audio_data, sample_rate = await self._load_and_prepare_audio(file)
@@ -157,7 +182,7 @@ class DeepgramAudio(Audio):
                 kwargs["sample_rate"] = 16000  # Match our target sample rate
                 kwargs["channels"] = 1  # Mono audio
 
-                live_options = LiveOptions(**kwargs)
+                live_options = self._build_options_object(LiveOptions, kwargs)
 
                 # Create single connection for all chunks
                 connection = self.client.listen.websocket.v("1")
