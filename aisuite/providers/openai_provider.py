@@ -2,6 +2,7 @@ import openai
 import os
 from typing import Union, BinaryIO, AsyncGenerator
 from aisuite.provider import Provider, LLMError, ASRError, Audio
+from aisuite.framework.parameter_mapper import ParameterMapper
 from aisuite.providers.message_converter import OpenAICompliantMessageConverter
 from aisuite.framework.message import (
     TranscriptionResult,
@@ -65,10 +66,18 @@ class OpenAIAudio(Audio):
         def __init__(self, client):
             self.client = client
 
+        def _resolve_kwargs(self, options, kwargs):
+            """Merge unified TranscriptionOptions into provider-specific kwargs."""
+            if options is not None:
+                kwargs = {**kwargs, **ParameterMapper.map_to_openai(options)}
+            kwargs.pop("options", None)
+            return kwargs
+
         def create(
             self,
             model: str,
             file: Union[str, BinaryIO],
+            options=None,
             **kwargs,
         ) -> TranscriptionResult:
             """
@@ -78,6 +87,8 @@ class OpenAIAudio(Audio):
             This is a simple pass-through to the OpenAI API.
             """
             try:
+                kwargs = self._resolve_kwargs(options, kwargs)
+
                 # Handle timestamp_granularities requirement
                 if "timestamp_granularities" in kwargs:
                     # OpenAI requires verbose_json format for timestamp_granularities
@@ -103,6 +114,7 @@ class OpenAIAudio(Audio):
             self,
             model: str,
             file: Union[str, BinaryIO],
+            options=None,
             **kwargs,
         ) -> AsyncGenerator[StreamingTranscriptionChunk, None]:
             """
@@ -112,6 +124,8 @@ class OpenAIAudio(Audio):
             This is a simple pass-through to the OpenAI API with streaming enabled.
             """
             try:
+                kwargs = self._resolve_kwargs(options, kwargs)
+
                 # Enable streaming
                 kwargs["stream"] = True
 
