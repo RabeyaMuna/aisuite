@@ -1,20 +1,22 @@
-import os
 import json
-import numpy as np
+import os
 import queue
 import threading
 import time
-from typing import Union, BinaryIO, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import BinaryIO
 
-from aisuite.provider import Provider, ASRError, Audio
+import numpy as np
+
 from aisuite.framework.message import (
-    TranscriptionResult,
-    Segment,
-    Word,
     Alternative,
     Channel,
+    Segment,
     StreamingTranscriptionChunk,
+    TranscriptionResult,
+    Word,
 )
+from aisuite.provider import ASRError, Audio, Provider
 
 
 class DeepgramProvider(Provider):
@@ -71,7 +73,7 @@ class DeepgramAudio(Audio):
         def create(
             self,
             model: str,
-            file: Union[str, BinaryIO],
+            file: str | BinaryIO,
             **kwargs,
         ) -> TranscriptionResult:
             """
@@ -82,6 +84,31 @@ class DeepgramAudio(Audio):
             """
             try:
                 from deepgram import PrerecordedOptions
+
+                from aisuite.framework.message import TranscriptionOptions
+
+                # Handle TranscriptionOptions if provided
+                options = kwargs.pop("options", None)
+                if isinstance(options, TranscriptionOptions):
+                    option_mapping = {
+                        "language": "language",
+                        "enable_speaker_diarization": "diarize",
+                        "enable_automatic_punctuation": "punctuate",
+                        "enable_profanity_filter": "profanity_filter",
+                        "enable_smart_formatting": "smart_format",
+                        "enable_sentiment_analysis": "sentiment",
+                        "enable_topic_detection": "topics",
+                        "enable_intent_recognition": "intents",
+                        "enable_summarization": "summarize",
+                        "encoding": "encoding",
+                        "sample_rate": "sample_rate",
+                        "channels": "channels",
+                        "max_alternatives": "alternatives",
+                    }
+                    for attr_name, dg_param in option_mapping.items():
+                        val = getattr(options, attr_name, None)
+                        if val is not None:
+                            kwargs[dg_param] = val
 
                 # Add model to params and set defaults
                 kwargs["model"] = model
@@ -108,7 +135,7 @@ class DeepgramAudio(Audio):
         async def create_stream_output(
             self,
             model: str,
-            file: Union[str, BinaryIO],
+            file: str | BinaryIO,
             chunk_size_minutes: float = 3.0,
             **kwargs,
         ) -> AsyncGenerator[StreamingTranscriptionChunk, None]:
@@ -251,7 +278,7 @@ class DeepgramAudio(Audio):
                 raise ASRError(f"Deepgram streaming transcription error: {e}")
 
 
-        def _prepare_audio_payload(self, file: Union[str, BinaryIO]) -> dict:
+        def _prepare_audio_payload(self, file: str | BinaryIO) -> dict:
             """Prepare audio payload for Deepgram API."""
             if isinstance(file, str):
                 with open(file, "rb") as audio_file:
@@ -266,7 +293,7 @@ class DeepgramAudio(Audio):
             return {"buffer": buffer_data}
 
         async def _load_and_prepare_audio(
-            self, file: Union[str, BinaryIO]
+            self, file: str | BinaryIO
         ) -> tuple[np.ndarray, int]:
             """Load and prepare audio file for streaming.
 
